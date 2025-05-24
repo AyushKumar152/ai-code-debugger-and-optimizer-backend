@@ -2,14 +2,14 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import requests
 import os
-from dotenv import load_dotenv
 
-load_dotenv()
+# Only load .env if running locally
+if os.environ.get("FLASK_ENV") != "production":
+    from dotenv import load_dotenv
+    load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
-
-
 
 JUDGE0_API_URL = "https://judge0-ce.p.rapidapi.com/submissions?base64_encoded=false&wait=true"
 JUDGE0_API_KEY = os.getenv("RAPIDAPI_KEY")
@@ -18,6 +18,10 @@ JUDGE0_API_HOST = os.getenv("RAPIDAPI_HOST")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 OPENROUTER_MODEL = "openai/gpt-3.5-turbo"
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
+
+# Print API key for debug (ONLY FOR TESTING — REMOVE BEFORE PRODUCTION)
+print("OpenRouter API Key:", OPENROUTER_API_KEY)
+
 OPENROUTER_HEADERS = {
     "Authorization": f"Bearer {OPENROUTER_API_KEY}",
     "Content-Type": "application/json"
@@ -55,6 +59,9 @@ def run_code():
 
 @app.route('/debug', methods=['POST'])
 def debug_code():
+    if not OPENROUTER_API_KEY:
+        return jsonify({"error": "OpenRouter API key not set"}), 500
+
     data = request.get_json()
     code = data.get('code')
     language = data.get('language')
@@ -85,6 +92,9 @@ def debug_code():
 
 @app.route('/optimize', methods=['POST'])
 def optimize_code():
+    if not OPENROUTER_API_KEY:
+        return jsonify({"error": "OpenRouter API key not set"}), 500
+
     data = request.get_json()
     code = data.get('code')
     language = data.get('language')
